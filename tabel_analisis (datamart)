@@ -1,0 +1,46 @@
+-- Membuat tabel dengan nama tabel_analisis
+CREATE TABLE kimia_farma.tabel_analisis AS
+
+-- Memilih kolom/field yang akan ditampilkan dalam tabel dari penggabungan beberapa dateset
+SELECT DISTINCT 
+-- mengimpor kolom dari dataset yang ada ke dalam tabel_analisis 
+  ft.transaction_id,
+  ft.date, ft.branch_id,
+  kc.branch_name,
+  kc.kota, 
+  kc.provinsi,
+  kc.rating_cabang,
+  ft.customer_name,
+  pd.product_id,
+  pd.product_name,
+  pd.price AS actual_price,
+  ft.discount_percentage,
+  --inisiasi kolom presentase_gross_laba sesuai dengan ketentuan
+  CASE
+    WHEN pd.price <=50000 THEN 0.10
+    WHEN pd.price > 50000 AND pd.price <= 100000 THEN 0.15
+    WHEN pd.price > 100000 AND pd.price <= 300000 THEN 0.20
+    WHEN pd.price > 300000 AND pd.price <= 500000 THEN 0.25
+   ELSE 0.30
+  END AS presentase_gross_laba,
+  -- iniasiasi kolom nett_sales
+  pd.price * (1 - ft.discount_percentage) AS nett_sales,
+  -- iniasiasi kolom nett_profit
+  pd.price * (1 - ft.discount_percentage) * 
+  CASE
+    WHEN pd.price <=50000 THEN 0.10
+    WHEN pd.price > 50000 AND pd.price <= 100000 THEN 0.15
+    WHEN pd.price > 100000 AND pd.price <= 300000 THEN 0.20
+    WHEN pd.price > 300000 AND pd.price <= 500000 THEN 0.25
+   ELSE 0.30
+   END AS nett_profit,
+ft.rating_transaksi
+
+-- Menggabungkan dataset yang diperlukan dengan menggunakan kolom/field unik yang sama pada masing-masing dataset
+FROM kimia_farma.kf_final_transaction AS ft
+LEFT JOIN kimia_farma.kf_kantor_cabang AS kc
+  ON ft.branch_id = kc.branch_id
+LEFT JOIN kimia_farma.kf_product AS pd
+  ON ft.product_id = pd.product_id ;
+
+
